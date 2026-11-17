@@ -1,0 +1,5 @@
+# dsh-session-ask bundle patch for DeepSeek Harness (dsh).
+# Applied when this package is selected as a profile bundle.
+- insert:
+    - id: session-ask
+      name: 'dsh-session-ask'
