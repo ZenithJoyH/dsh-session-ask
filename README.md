@@ -20,7 +20,7 @@ DSH（DeepSeek Harness）宿主插件：让一个会话向**同一工作区**的
 |---|---|
 | `session_ask` | 投递问题并等待；超时返回 `{status:"pending", ticket}`，回复稍后自动送达 |
 | `session_send` | 立即返回 ticket，不等待；回复稍后自动送达 |
-| `session_find` | 按 id/标题查同工作区、非 subagent、非空会话 |
+| `session_find` | 按 id/标题查同工作区、非 subagent、非空会话；查询命中自身时返回 `current: true` 的行，空结果附 `hint`（说明搜索范围、本会话 id、改名不影响 id） |
 | `session_replies` | 查看本会话最近的 ticket 状态与回复 |
 
 示例：
@@ -123,7 +123,7 @@ cd dsh-session-ask
 npm test
 ```
 
-14 个测试覆盖：参数校验、防环图、回复提取（含同轮 runtime context）、同步问答、超时晚到回复、异步投递、跨工作区拒绝、父会话拒绝、只读工具层、目标发现。
+17 个测试覆盖：参数校验、防环图、回复提取（含同轮 runtime context）、同步问答、超时晚到回复、异步投递、跨工作区拒绝、父会话拒绝、只读工具层、目标发现、目标发现命中自身（current 行）、无查询时不列自身、空结果的 hint 文案。
 
 宿主端到端已验证：`session_find` 找到目标；`session_ask` 同步返回 `PONG5/PONG6`；只读工具层下目标正常作答。
 

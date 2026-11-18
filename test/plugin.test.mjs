@@ -55,6 +55,7 @@ function makeHarness({ callerCwd = '/workspace', targetCwd = '/workspace', targe
             { sessionId: 'session-c', cwd: targetCwd, running: true, updatedAt: 2, blank: false, projections: { values: { title: 'Other' } } },
             { sessionId: 'session-d', cwd: '/other', running: false, updatedAt: 1, blank: false },
             { sessionId: 'session-e', cwd: targetCwd, running: false, updatedAt: 4, blank: false, origin: 'subagent' },
+            { sessionId: 'session-a', cwd: targetCwd, running: false, updatedAt: 5, blank: false, projections: { values: { title: 'Caller work' } } },
           ],
         }
       },
@@ -205,4 +206,40 @@ test('session_find lists same-workspace non-subagent sessions', async () => {
   )
   assert.deepEqual(result.items.map(item => item.sessionId), ['session-c', 'session-b'])
   assert.equal(result.items[1].title, 'Target work')
+})
+
+test('session_find marks the caller itself when the query matches its own title', async () => {
+  const h = makeHarness()
+  const result = await h.defs.session_find.execute(
+    { query: 'caller work' },
+    { agent: h.caller, signal: new AbortController().signal },
+  )
+  assert.equal(result.items.length, 1)
+  assert.equal(result.items[0].sessionId, 'session-a')
+  assert.equal(result.items[0].current, true)
+  assert.equal(result.hint, undefined)
+  const rendered = h.defs.session_find.output.render({}, result)
+  assert.match(rendered[0].text, /current session/)
+})
+
+test('session_find never lists the caller in an unfiltered listing', async () => {
+  const h = makeHarness()
+  const result = await h.defs.session_find.execute(
+    {},
+    { agent: h.caller, signal: new AbortController().signal },
+  )
+  assert.equal(result.items.some(item => item.current === true), false)
+})
+
+test('session_find explains an empty result instead of returning a silent empty list', async () => {
+  const h = makeHarness()
+  const result = await h.defs.session_find.execute(
+    { query: 'stale title from before the rename' },
+    { agent: h.caller, signal: new AbortController().signal },
+  )
+  assert.deepEqual(result.items, [])
+  assert.match(result.hint, /session-a/)
+  assert.match(result.hint, /renamed/)
+  const rendered = h.defs.session_find.output.render({}, result)
+  assert.equal(rendered[0].text, result.hint)
 })
